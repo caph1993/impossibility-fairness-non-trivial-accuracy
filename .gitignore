@@ -2,25 +2,7 @@
 .*
 !/.gitignore
 
-
-# Latex output files
-*.pdf
-*.synctex.gz
-
-# Latex auxiliary files
-*.aux
-*.bbl
-*.bcf
-*.blg
-*.fdb_latexmk
-*.fls
-*.log
-*.out
-*.run.xml
-
-# Generally ignored
-gitignored
-node_modules
-__pycache__
+# Generally ignored files
+__*
 *~
 *\#

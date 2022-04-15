@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Tuple, Sequence, Iterable
+from typing import List, Optional, Tuple, Sequence, Iterable
 from matplotlib import lines
 import numpy as np
 import matplotlib.pyplot as plt
@@ -109,7 +109,7 @@ class DataSource:
         Q[i] = Prob[Y=1 | X=x, A=a] 
     '''
 
-    def __init__(self, P: Array, Q: Array, title: str = None):
+    def __init__(self, P: Array, Q: Array, title: Optional[str] = None):
         assert len(P) == len(Q)
         assert len(P) % 2 == 0
         n = len(P) // 2
@@ -135,7 +135,7 @@ class DataSource:
         print(f'Q={Q.round(3)}')
 
     @classmethod
-    def atRandom(cls, n: int, seed=None, kind='arbitrary', bias=0):
+    def atRandom(cls, n: int, seed=None, kind='arbitrary', bias: float = 0):
         R = np.random.RandomState(seed)
         P = R.rand(2 * n)
         P /= P.sum()
@@ -158,7 +158,7 @@ class DataSource:
             Q[n:] = Q[n:]**(1 / p)
         return cls(P, Q, title=f'DataSource(n={n}, seed={seed})')
 
-    def empirical(self, n: int, seed: int = None):
+    def empirical(self, n: int, seed: Optional[int] = None):
         RS = np.random.RandomState(seed)
         I = RS.choice(2 * self.n, n, p=self.P)
         P = np.zeros_like(self.P)
@@ -302,7 +302,7 @@ class DataSource:
 
     def the_plot(
         self,
-        ds: DataSource = None,
+        ds: Optional[DataSource] = None,
         styles=(),
         r=0.05,
         n_random=0,
@@ -387,7 +387,7 @@ class DataSource:
             self,
             n_empiricals: int,
             n_samples: int,
-            seed: int = None,
+            seed: Optional[int] = None,
             styles=(),
             r=0.05,
     ):
