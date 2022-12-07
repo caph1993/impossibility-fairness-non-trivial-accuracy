@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple, Sequence, Iterable
 from matplotlib import lines
 import numpy as np
 import matplotlib.pyplot as plt
-from cp93pytools.methodtools import cached_property
+from methodtools import cached_property
 from argmax_subject_to_eq import argmax_st_zero
 
 Array = np.ndarray
