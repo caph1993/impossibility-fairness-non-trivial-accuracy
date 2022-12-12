@@ -10,7 +10,7 @@ Array = np.ndarray
 
 
 class RandInterval(np.random.RandomState):
-    '''Uniform sampling from (a, b)'''
+    """Uniform sampling from (a, b)"""
 
     def open(self, a, b):
         assert a < b
@@ -21,7 +21,7 @@ class RandInterval(np.random.RandomState):
 
 
 def vectorGenerator(seed=None):
-    '''Algorithm 1 of the paper. Asserts the 5 conditions'''
+    """Algorithm 1 of the paper. Asserts the 5 conditions"""
     R = RandInterval(seed)
     Q1 = R.open(0, 1 / 2)
     Q2 = R.open(1 / 2, 1)
@@ -44,13 +44,13 @@ def vectorGenerator(seed=None):
         assert Q3 + Q1 > 1
         assert P1 * Q1 + P2 * Q2 - P3 * Q1 < 0
     except AssertionError as e:
-        e.args = (f'\nP={P.round(3)}\nQ={Q.round(3)}',)
+        e.args = (f"\nP={P.round(3)}\nQ={Q.round(3)}",)
         raise
     return P, Q
 
 
 def arbitraryGenerator(seed=None, n=4):
-    '''Arbitrary generator for explanation purposes'''
+    """Arbitrary generator for explanation purposes"""
     R = np.random.RandomState(seed)
     P: Array = R.random(n)  # type: ignore
     P /= P.sum()
@@ -59,19 +59,19 @@ def arbitraryGenerator(seed=None, n=4):
 
 
 def test_generator(many_times):
-    '''Test (run) the vectorGenerator many times'''
+    """Test (run) the vectorGenerator many times"""
     assert many_times > 0
     for _ in range(many_times):
         vectorGenerator(seed=None)
-    print(f'{many_times} tests passed')
+    print(f"{many_times} tests passed")
     return
 
 
 class ClockShift:
-    '''
+    """
     Geometric tool for measuring angles from 00h00 to 11h59
     For sorting by angle purposes, it can be shifted or set to run counter clockwise.
-    '''
+    """
 
     def __init__(self, start: float, cw: bool = True):
         self.start = start
@@ -86,11 +86,11 @@ class ClockShift:
 
     @staticmethod
     def coord_to_time(x: float, y: float) -> float:
-        'Clock hour for ray (0,0)->(x,y), from 0.0 to 11.5999...'
+        "Clock hour for ray (0,0)->(x,y), from 0.0 to 11.5999..."
         return (3 - np.arctan2(y, x) * 6 / np.pi) % 12.0
 
 
-#test_generator(many_times=10**4)
+# test_generator(many_times=10**4)
 
 import itertools
 from matplotlib.patches import Polygon
@@ -99,15 +99,15 @@ from scipy.spatial import ConvexHull, convex_hull_plot_2d
 
 
 class DataSource:
-    '''
+    """
     Class for representing a discrete and finite datasource.
     There are n possible values for x: {0, 1, ..., n-1}
     And two possible values for a: {0, 1}
     For fixed (x, a) we let i := x + a*n.
     The class contains two arrays P, Q of length 2*n:
         P[i] = Prob[X=x, A=a]
-        Q[i] = Prob[Y=1 | X=x, A=a] 
-    '''
+        Q[i] = Prob[Y=1 | X=x, A=a]
+    """
 
     def __init__(self, P: Array, Q: Array, title: Optional[str] = None):
         assert len(P) == len(Q)
@@ -126,23 +126,23 @@ class DataSource:
         self._gradients = dx, dy
         self._x0 = np.sum(P * Q)
         self._bayes_sign = np.sign(self.oppDiff(self.Bayes))
-        self.title = title or f'DataSource(fixed P,Q, 2n={2*self.n})'
+        self.title = title or f"DataSource(fixed P,Q, 2n={2*self.n})"
 
     def print(self):
         n, P, Q = self.nPQ
-        print(f'2n={2*n}')
-        print(f'P={P.round(3)}')
-        print(f'Q={Q.round(3)}')
+        print(f"2n={2*n}")
+        print(f"P={P.round(3)}")
+        print(f"Q={Q.round(3)}")
 
     @classmethod
-    def atRandom(cls, n: int, seed=None, kind='arbitrary', bias: float = 0):
+    def atRandom(cls, n: int, seed=None, kind="arbitrary", bias: float = 0):
         R = np.random.RandomState(seed)
         P = R.rand(2 * n)
         P /= P.sum()
         Q = R.rand(2 * n)
-        if kind == 'deterministic':
+        if kind == "deterministic":
             Q = (Q > 1 / 2).astype(float)
-        elif kind == 'problematic':
+        elif kind == "problematic":
             if n == 2:
                 # Generated example for Theorem "Impossibility result"
                 P, Q = vectorGenerator(seed=seed)
@@ -154,9 +154,9 @@ class DataSource:
                 # Q[A == 0] = Q[A == 0] / 2 - 1 / 2
         if bias != 0:
             p = 1 + bias if bias > 0 else 1 / (1 - bias)
-            Q[:n] = Q[:n]**p
-            Q[n:] = Q[n:]**(1 / p)
-        return cls(P, Q, title=f'DataSource(n={n}, seed={seed})')
+            Q[:n] = Q[:n] ** p
+            Q[n:] = Q[n:] ** (1 / p)
+        return cls(P, Q, title=f"DataSource(N={n}, seed={seed})")
 
     def empirical(self, n: int, seed: Optional[int] = None):
         RS = np.random.RandomState(seed)
@@ -165,11 +165,11 @@ class DataSource:
         Q = np.zeros_like(self.Q)
         for i in I:
             P[i] += 1
-            Q[i] += (RS.random() < self.Q[i])
+            Q[i] += RS.random() < self.Q[i]
         Q = np.divide(Q, P + (Q == 0))
         P /= P.sum()
         cls = self.__class__
-        title = f'{self.title}.empirical(n={n}, seed={seed})'
+        title = f"{self.title}.empirical(n={n}, seed={seed})"
         return cls(P, Q, title=title)
 
     def err(self, R: Array):
@@ -187,13 +187,13 @@ class DataSource:
 
     @cached_property
     def Bayes(self):
-        'Classifier with maximal accuracy'
+        "Classifier with maximal accuracy"
         _, _, Q = self.nPQ
         return (Q > 1 / 2).astype(float)
 
     @cached_property
     def Fair(self):
-        'Regressor with maximal accuracy constrained to 0 bias'
+        "Regressor with maximal accuracy constrained to 0 bias"
         return self.pareto[-1]
 
     @cached_property
@@ -204,9 +204,9 @@ class DataSource:
         l = [(self.err(R), self.oppDiff(R)) for R in R_iter]
         return np.array(l)
 
-    '''
+    """
     @section Convex hull
-    '''
+    """
 
     def iter_hard_brute(self):
         for f in itertools.product([0, 1], repeat=2 * self.n):
@@ -246,22 +246,22 @@ class DataSource:
                 path.append(R.copy())
         return path
 
-    '''
+    """
     @section Pareto walks
-    '''
+    """
 
     def walk_pareto_to_accurate(self, R):
-        '''
+        """
         Walks from R to Bayes through neighboring pareto
         classifiers, yielding them on each step
         Assumes that R is a pareto classifier, possibly soft
         O(n log n)
-        '''
+        """
         R = R.copy()
         yield R.copy()
         cs = ClockShift(9, self._bayes_sign > 0)
         for h, i, v in self._sorted_clock_moves(cs):
-            error_decrease = (6 < h < 12)
+            error_decrease = 6 < h < 12
             if not error_decrease:
                 break
             if R[i] != v:
@@ -270,12 +270,12 @@ class DataSource:
         return
 
     def walk_pareto_to_fair(self, R):
-        '''
+        """
         Walks from R to Fair through neighboring pareto
         classifiers, yielding them on each step
         Assumes that R is a pareto classifier, possibly soft
         O(n log n)
-        '''
+        """
         _, dy = self._gradients
         R = R.copy()
         yield R.copy()
@@ -292,7 +292,7 @@ class DataSource:
                 # Take a precise portion of last step
                 v = R[i] + -bias / dy[i]
                 new_bias = bias + dy[i] * (v - R[i])
-                assert (0 <= v <= 1 and abs(new_bias) < 1e-9), (v, new_bias)
+                assert 0 <= v <= 1 and abs(new_bias) < 1e-9, (v, new_bias)
             R[i] = v
             yield R.copy()
             bias = new_bias
@@ -314,34 +314,34 @@ class DataSource:
         if ds is None:
             ds = self
 
-        with plt.style.context(['grid', 'scatter', *styles]):  # type:ignore
-            self_is_empirical = '.empirical(' in self.title
-            colors = ['tab:blue', 'tab:orange']
+        with plt.style.context(["grid", "scatter", *styles]):  # type:ignore
+            self_is_empirical = ".empirical(" in self.title
+            colors = ["tab:blue", "tab:orange"]
 
             if ds is not self and self_is_empirical:
                 colors = colors[::-1]
 
-            self.plot_poly(self.hull, color=colors[0], label='Feasible')
+            self.plot_poly(self.hull, color=colors[0], label="Feasible")
             if hull_border:
                 self.plot_path(self.hull, color=colors[0])
             if ds is not self:
-                label = 'Real Hull' if self_is_empirical else 'Empirical Hull'
+                label = "Real Hull" if self_is_empirical else "Empirical Hull"
                 self.plot_path(ds.hull, color=colors[1], label=label)
             if constants:
-                self.plot_scatter(ds.iter_const(), marker='x', label='Constant')
-            #self.plot_scatter(self.iter_hard_brute(), marker=',', label='Hard')
-            #self.plot_scatter([self.Q], marker='*', label='Replica')
-            #self.plot_path(self.walk_zero_to_fair(), color='black')
+                self.plot_scatter(ds.iter_const(), marker="x", label="Constant")
+            # self.plot_scatter(self.iter_hard_brute(), marker=',', label='Hard')
+            # self.plot_scatter([self.Q], marker='*', label='Replica')
+            # self.plot_path(self.walk_zero_to_fair(), color='black')
 
-            #p = list(self.walk_horizontally(self.rand()))
-            #self.plot_path(iter(p), color='blue')
-            #self.plot_movements(p[-1])
+            # p = list(self.walk_horizontally(self.rand()))
+            # self.plot_path(iter(p), color='blue')
+            # self.plot_movements(p[-1])
 
-            #self.plot_path(self.walk_pareto_to_accurate(self.Fair),color='green')
+            # self.plot_path(self.walk_pareto_to_accurate(self.Fair),color='green')
 
-            self.plot_path(ds.pareto, color='red')
-            self.plot_scatter([ds.Bayes], color='black', label='Bayes')
-            self.plot_scatter([ds.Fair], color='green', label='Fair')
+            self.plot_path(ds.pareto, color="red")
+            self.plot_scatter([ds.Bayes], color="black", label="Bayes")
+            self.plot_scatter([ds.Fair], color="green", label="Fair")
             if pareto_movements:
                 self.plot_movements(ds.Bayes)
                 self.plot_movements(ds.Fair)
@@ -349,9 +349,9 @@ class DataSource:
                 R = np.random.RandomState(i + extra_seed)
                 self.plot_movements(R.rand(2 * self.n), linewidth=0.3)
 
-            preffix = 'Apparent ' if self_is_empirical else ''
-            plt.xlabel(f'{preffix}Error')
-            plt.ylabel(f'{preffix}Opportunity-difference')
+            preffix = "Apparent " if self_is_empirical else ""
+            plt.xlabel(f"{preffix}Error")
+            plt.ylabel(f"{preffix}Opportunity-difference")
             R_visible = [self.Bayes, self.Fair, ds.Bayes, ds.Fair]
             XX, YY = self.bounding_box(R_visible, r)
             plt.xlim(XX)
@@ -359,11 +359,11 @@ class DataSource:
             if self is ds:
                 title = self.title
             elif self_is_empirical:
-                self_title = self.title.replace(ds.title, '')
-                title = f'{self_title} vs {ds.title}'
+                self_title = self.title.replace(ds.title, "")
+                title = f"{self_title} vs {ds.title}"
             else:
-                ds_title = ds.title.replace(self.title, '')
-                title = f'{self.title} vs {ds_title}'
+                ds_title = ds.title.replace(self.title, "")
+                title = f"{self.title} vs {ds_title}"
             plt.title(title)
             plt.legend()
             plt.show()
@@ -384,42 +384,38 @@ class DataSource:
         return (xlo, xhi), (ylo, yhi)
 
     def plot_many_empiricals(
-            self,
-            n_empiricals: int,
-            n_samples: int,
-            seed: Optional[int] = None,
-            styles=(),
-            r=0.05,
+        self,
+        n_empiricals: int,
+        n_samples: int,
+        seed: Optional[int] = None,
+        styles=(),
+        r=0.05,
     ):
-        with plt.style.context(['grid', 'scatter', *styles]):  # type:ignore
-            self.plot_poly(self.hull, color='tab:blue', label='Feasible')
+        with plt.style.context(["grid", "scatter", *styles]):  # type:ignore
+            self.plot_poly(self.hull, color="tab:blue", label="Feasible")
             bayes_seq = []
             fair_seq = []
             RS = np.random.RandomState(seed)
             alpha = min(1, 1 / (0.1 + np.log10(n_empiricals)))
             for _ in range(n_empiricals):
                 ds = self.empirical(n_samples, seed=RS.randint(0, 10**8))
-                self.plot_path(ds.pareto, color='red', linewidth=0.1,
-                               alpha=alpha / 2)
-                self.plot_scatter([ds.Bayes], marker='*', color='black',
-                                  alpha=alpha)
-                self.plot_scatter([ds.Fair], marker='*', color='green',
-                                  alpha=alpha)
+                self.plot_path(ds.pareto, color="red", linewidth=0.1, alpha=alpha / 2)
+                self.plot_scatter([ds.Bayes], marker="*", color="black", alpha=alpha)
+                self.plot_scatter([ds.Fair], marker="*", color="green", alpha=alpha)
                 bayes_seq.append(ds.Bayes)
                 fair_seq.append(ds.Fair)
             bayes_XY = self.XY(bayes_seq).mean(axis=0, keepdims=True)
             fair_XY = self.XY(fair_seq).mean(axis=0, keepdims=True)
-            kw = {'alpha': 1, 'marker': 'x', 's': 150}
-            self._plot_scatter(bayes_XY, color='black', label='Bayes mean',
-                               **kw)
-            self._plot_scatter(fair_XY, color='green', label='Fair mean', **kw)
+            kw = {"alpha": 1, "marker": "x", "s": 150}
+            self._plot_scatter(bayes_XY, color="black", label="Bayes mean", **kw)
+            self._plot_scatter(fair_XY, color="green", label="Fair mean", **kw)
 
-            plt.xlabel(f'Error')
-            plt.ylabel(f'Opportunity-difference')
+            plt.xlabel(f"Error")
+            plt.ylabel(f"Opportunity-difference")
             R_visible = [self.Bayes, self.Fair, *bayes_seq, *fair_seq]
             XX, YY = self.bounding_box(R_visible, r)
             plt.title(
-                f'{n_empiricals} experiments of {n_samples} samples from {self.title}'
+                f"{n_empiricals} experiments of {n_samples} samples from {self.title}"
             )
             plt.xlim(XX)
             plt.ylim(YY)
@@ -427,25 +423,23 @@ class DataSource:
             plt.show()
         return
 
-    def plot_poly(self, R_iter: Iterable[Array], color='tab:blue', label=None,
-                  alpha=0.25):
+    def plot_poly(
+        self, R_iter: Iterable[Array], color="tab:blue", label=None, alpha=0.25
+    ):
         poly = Polygon(self.XY(R_iter), label=label, alpha=alpha, color=color)
         plt.gca().add_patch(poly)
-        #self.plot_path(self.R_iter, color='magenta')
+        # self.plot_path(self.R_iter, color='magenta')
 
     def plot_path(self, R_iter: Iterable[Array], color, **kwargs):
         x, y = self.XY(R_iter).T
         plt.plot(
-            x, y, color=color, **{
-                'alpha': 0.5,
-                'linestyle': '-',
-                'marker': '.',
-                'zorder': 1.5,
-                **kwargs
-            })
+            x,
+            y,
+            color=color,
+            **{"alpha": 0.5, "linestyle": "-", "marker": ".", "zorder": 1.5, **kwargs},
+        )
 
-    def plot_movements(self, R: Array, color='black', alpha=0.75,
-                       linewidth=0.1):
+    def plot_movements(self, R: Array, color="black", alpha=0.75, linewidth=0.1):
         x0, y0 = self.XY([R])[0]
         dx, dy = self._gradients
         for i in range(2 * self.n):
@@ -453,24 +447,31 @@ class DataSource:
             ylo = y0 - dy[i] * R[i]
             x = [xlo, xlo + dx[i]]
             y = [ylo, ylo + dy[i]]
-            plt.plot(x, y, color=color, linestyle='-', alpha=alpha,
-                     linewidth=linewidth, marker=',', zorder=1.5)
+            plt.plot(
+                x,
+                y,
+                color=color,
+                linestyle="-",
+                alpha=alpha,
+                linewidth=linewidth,
+                marker=",",
+                zorder=1.5,
+            )
 
     def plot_scatter(self, R_iter: Iterable[Array], **kwargs):
         metrics = self.XY(R_iter)
         self._plot_scatter(metrics, **kwargs)
 
     def _plot_scatter(self, metrics, **kwargs):
-        plt.scatter(metrics[:, 0], metrics[:, 1], **{
-            'zorder': 1.6,
-            'alpha': 0.95,
-            'marker': '*',
-            **kwargs
-        })
+        plt.scatter(
+            metrics[:, 0],
+            metrics[:, 1],
+            **{"zorder": 1.6, "alpha": 0.95, "marker": "*", **kwargs},
+        )
 
-    '''
+    """
     @section Additional methods
-    '''
+    """
 
     def iter_soft(self, k=11):
         dim = np.linspace(0, 1, k)
@@ -529,8 +530,7 @@ class DataSource:
             new_i, new_j = (1, new_j) if new_j <= 1 else (new_i, 1)
             assert new_i <= 1 and new_j <= 1
 
-            increment = (new_i - R[i]) * acc_grad[i] + (new_j -
-                                                        R[j]) * acc_grad[j]
+            increment = (new_i - R[i]) * acc_grad[i] + (new_j - R[j]) * acc_grad[j]
             if increment <= 0:
                 break
             R[i], R[j] = (new_i, new_j)
