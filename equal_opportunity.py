@@ -323,10 +323,10 @@ class DataSource:
 
             self.plot_poly(self.hull, color=colors[0], label="Feasible")
             if hull_border:
-                self.plot_path(self.hull, color=colors[0])
+                self.plot_closed_path(self.hull, color=colors[0])
             if ds is not self:
                 label = "Real Hull" if self_is_empirical else "Empirical Hull"
-                self.plot_path(ds.hull, color=colors[1], label=label)
+                self.plot_closed_path(ds.hull, color=colors[1], label=label)
             if constants:
                 self.plot_scatter(ds.iter_const(), marker="x", label="Constant")
             # self.plot_scatter(self.iter_hard_brute(), marker=',', label='Hard')
@@ -438,6 +438,11 @@ class DataSource:
             color=color,
             **{"alpha": 0.5, "linestyle": "-", "marker": ".", "zorder": 1.5, **kwargs},
         )
+
+    def plot_closed_path(self, R_iter: Iterable[Array], color, **kwargs):
+        R_iter_closed = [*R_iter]
+        R_iter_closed.append(R_iter_closed[0])
+        self.plot_path(R_iter_closed, color, **kwargs)
 
     def plot_movements(self, R: Array, color="black", alpha=0.75, linewidth=0.1):
         x0, y0 = self.XY([R])[0]
